@@ -23,10 +23,10 @@ connectDB();  // Call the function to connect to MongoDB
 // Middleware to parse JSON and enable CORS
 app.use(express.json());
 app.use(cors({
-    origin: [
+    origin: [ "*"
         // 'https://paharpur-frontend-adminpanel.vercel.app',
-        'https://paharpur-admin-fend.vercel.app',
-        'https://pahar-pur-frontend.vercel.app',
+        // 'https://paharpur-admin-fend.vercel.app',
+        // 'https://pahar-pur-frontend.vercel.app',
     ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
