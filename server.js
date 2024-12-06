@@ -23,10 +23,10 @@ connectDB();  // Call the function to connect to MongoDB
 // Middleware to parse JSON and enable CORS
 app.use(express.json());
 app.use(cors({
-    origin: [ "*"
-        // 'https://paharpur-frontend-adminpanel.vercel.app',
-        // 'https://paharpur-admin-fend.vercel.app',
-        // 'https://pahar-pur-frontend.vercel.app',
+    origin: [
+        'https://paharpur-frontend-adminpanel.vercel.app',
+        'https://pahar-pur-frontend.vercel.app',
+        'https://paharpur-admin-fend.vercel.app'
     ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -70,6 +70,10 @@ app.use("/api/footer", footerRoutes);
 
 // Add enquiry routes
 app.use('/api/enquiries', enquiryRoutes);
+
+app.get('/test-cors', (req, res) => {
+    res.json({ message: 'CORS is working!' });
+});
 
 // Start Server
 const PORT = process.env.PORT || 5000;
