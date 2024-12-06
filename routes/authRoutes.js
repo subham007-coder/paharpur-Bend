@@ -5,7 +5,8 @@ const {
     login, 
     logout, 
     checkAuth,
-    getAllAdmins 
+    getAllAdmins,
+    getCurrentUser
 } = require('../controllers/authController');
 const { requireAuth } = require('../middleware/authMiddleware');
 
@@ -14,5 +15,6 @@ router.post('/login', login);
 router.post('/logout', logout);
 router.get('/check-auth', checkAuth);
 router.get('/admins', requireAuth, getAllAdmins);
+router.get('/current-user', requireAuth, getCurrentUser);
 
 module.exports = router;

@@ -255,10 +255,44 @@ const getAllAdmins = async (req, res) => {
     }
 };
 
+const getCurrentUser = async (req, res) => {
+    try {
+        // req.user is set by requireAuth middleware
+        const user = await User.findById(req.user._id)
+            .select('-password') // Exclude password
+            .select('-__v'); // Exclude version key
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found'
+            });
+        }
+
+        res.json({
+            success: true,
+            user: {
+                _id: user._id,
+                username: user.username,
+                email: user.email,
+                role: user.role
+            }
+        });
+    } catch (error) {
+        console.error('Error in getCurrentUser:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error fetching user data',
+            error: error.message
+        });
+    }
+};
+
 module.exports = {
     register,
     login,
     logout,
     checkAuth,
-    getAllAdmins
+    getAllAdmins,
+    getCurrentUser
 };
