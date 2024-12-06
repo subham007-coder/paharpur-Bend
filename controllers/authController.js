@@ -31,8 +31,8 @@ const register = async (req, res) => {
             });
         }
 
-        // Validate role (only allow admin or superadmin if the user is an admin)
-        if (role && !['admin', 'superadmin'].includes(role)) {
+        // Validate role
+        if (!['admin', 'superadmin'].includes(role)) {
             return res.status(400).json({ 
                 success: false,
                 message: 'Invalid role specified' 
@@ -44,7 +44,7 @@ const register = async (req, res) => {
             username,
             email,
             password,
-            role: role || 'user' // Default to 'user' if no role is provided
+            role
         });
 
         await newUser.save();
@@ -59,7 +59,7 @@ const register = async (req, res) => {
         // Set cookie
         res.cookie('token', token, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production', // Set secure based on environment
+            secure: true,
             sameSite: 'none',
             maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
             path: '/'
@@ -79,7 +79,7 @@ const register = async (req, res) => {
         res.status(500).json({ 
             success: false,
             message: 'Registration failed',
-            error: 'Internal server error' // Avoid exposing error details
+            error: err.message 
         });
     }
 };
@@ -117,17 +117,18 @@ const login = async (req, res) => {
         // Create token
         const token = jwt.sign(
             { id: user._id, role: user.role },
-            JWT_SECRET,
-            { expiresIn: TOKEN_EXPIRY } // Use consistent expiry
+            process.env.JWT_SECRET,
+            { expiresIn: '24h' }
         );
 
-        // Set cookie
+        // Updated cookie settings
         res.cookie('token', token, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production', // Set secure based on environment
+            secure: true,
             sameSite: 'none',
             path: '/',
-            maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+            maxAge: 24 * 60 * 60 * 1000,
+            partitioned: true // Add this for Chrome's new cookie policy
         });
 
         res.json({
@@ -138,14 +139,14 @@ const login = async (req, res) => {
                 email: user.email,
                 role: user.role
             },
-            token // Optionally send token in response
+            token: token // Send token in response as well
         });
     } catch (err) {
         console.error('Login error:', err);
         res.status(500).json({ 
             success: false,
             message: 'Login failed',
-            error: 'Internal server error' // Avoid exposing error details
+            error: err.message 
         });
     }
 };
@@ -154,7 +155,7 @@ const logout = async (req, res) => {
     try {
         res.cookie('token', '', {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production', // Set secure based on environment
+            secure: true,
             sameSite: 'none',
             path: '/',
             expires: new Date(0)
@@ -168,7 +169,7 @@ const logout = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Logout failed',
-            error: 'Internal server error' // Avoid exposing error details
+            error: err.message
         });
     }
 };
@@ -215,14 +216,17 @@ const checkAuth = async (req, res) => {
 // Get All Admin Accounts
 const getAllAdmins = async (req, res) => {
     try {
+        // Get the current user's ID from the token
         const token = req.cookies.token;
         const decoded = jwt.verify(token, JWT_SECRET);
         const currentUserId = decoded.id;
 
+        // Find all admin and superadmin users
         const admins = await User.find({ 
             role: { $in: ['admin', 'superadmin'] } 
         }).select('_id username email role');
 
+        // Format the response
         const formattedAdmins = admins.map(admin => {
             const adminObj = {
                 _id: admin._id,
@@ -230,6 +234,7 @@ const getAllAdmins = async (req, res) => {
                 role: admin.role
             };
 
+            // Only include email if it's the current user
             if (admin._id.toString() === currentUserId) {
                 adminObj.email = admin.email;
             }
@@ -245,15 +250,17 @@ const getAllAdmins = async (req, res) => {
         res.status(500).json({ 
             success: false,
             message: 'Failed to fetch admin accounts',
-            error: 'Internal server error' // Avoid exposing error details
+            error: err.message 
         });
     }
 };
 
 const getCurrentUser = async (req, res) => {
     try {
+        // req.user is set by requireAuth middleware
         const user = await User.findById(req.user._id)
-            .select('-password -__v'); // Exclude password and version key
+            .select('-password') // Exclude password
+            .select('-__v'); // Exclude version key
 
         if (!user) {
             return res.status(404).json({
@@ -276,7 +283,7 @@ const getCurrentUser = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Error fetching user data',
-            error: 'Internal server error' // Avoid exposing error details
+            error: error.message
         });
     }
 };
