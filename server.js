@@ -10,6 +10,7 @@ const initiativeRoutes = require("./routes/initiativeRoutes");
 const footerRoutes = require("./routes/footer"); // Import footer routes
 const cookieParser = require('cookie-parser');
 const enquiryRoutes = require('./routes/enquiryRoutes');
+const session = require('express-session');
 
 
 dotenv.config();
@@ -28,11 +29,24 @@ app.use(cors({
     ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie']
-}));  // Enable cross-origin requests
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Cookie'],
+    exposedHeaders: ['set-cookie']
+}));
 
-// Add cookie-parser middleware before routes
-app.use(cookieParser());
+// Add these additional settings for cookies
+app.use(cookieParser(process.env.COOKIE_SECRET));
+
+// Add cookie session settings if you're using it
+app.use(session({
+    secret: process.env.SESSION_SECRET || 'your-secret-key',
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+        secure: true,
+        sameSite: 'none',
+        maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    }
+}));
 
 // Use the auth routes
 app.use('/api/auth', authRoutes);

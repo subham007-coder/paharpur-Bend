@@ -117,16 +117,17 @@ const login = async (req, res) => {
         // Create token
         const token = jwt.sign(
             { id: user._id, role: user.role },
-            JWT_SECRET,
-            { expiresIn: TOKEN_EXPIRY }
+            process.env.JWT_SECRET,
+            { expiresIn: '24h' }
         );
 
         // Set cookie
         res.cookie('token', token, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
-            maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+            secure: true, // Required for HTTPS
+            sameSite: 'none', // Required for cross-origin
+            maxAge: 24 * 60 * 60 * 1000, // 24 hours
+            path: '/'
         });
 
         res.json({
@@ -140,6 +141,7 @@ const login = async (req, res) => {
             isAuthenticated: true
         });
     } catch (err) {
+        console.error('Login error:', err);
         res.status(500).json({ 
             success: false,
             message: 'Login failed',
