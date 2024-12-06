@@ -30,21 +30,22 @@ app.use(cors({
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Cookie'],
-    exposedHeaders: ['set-cookie']
 }));
 
 // Add these additional settings for cookies
-app.use(cookieParser(process.env.COOKIE_SECRET));
+app.use(cookieParser());
 
 // Add cookie session settings if you're using it
 app.use(session({
-    secret: process.env.SESSION_SECRET || 'your-secret-key',
+    secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
     cookie: {
         secure: true,
         sameSite: 'none',
-        maxAge: 24 * 60 * 60 * 1000 // 24 hours
+        maxAge: 24 * 60 * 60 * 1000, // 24 hours
+        path: '/',
+        partitioned: true // Add this for Chrome's new cookie policy
     }
 }));
 

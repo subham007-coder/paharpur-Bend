@@ -3,8 +3,8 @@ const User = require('../models/User');
 
 const requireAuth = async (req, res, next) => {
     try {
-        // Get token from cookie
-        const token = req.cookies.token;
+        // Check for token in cookies and Authorization header
+        const token = req.cookies.token || req.headers.authorization?.split(' ')[1];
 
         if (!token) {
             return res.status(401).json({ 

@@ -121,13 +121,14 @@ const login = async (req, res) => {
             { expiresIn: '24h' }
         );
 
-        // Set cookie
+        // Updated cookie settings
         res.cookie('token', token, {
             httpOnly: true,
-            secure: true, // Required for HTTPS
-            sameSite: 'none', // Required for cross-origin
-            maxAge: 24 * 60 * 60 * 1000, // 24 hours
-            path: '/'
+            secure: true,
+            sameSite: 'none',
+            path: '/',
+            maxAge: 24 * 60 * 60 * 1000,
+            partitioned: true // Add this for Chrome's new cookie policy
         });
 
         res.json({
@@ -138,7 +139,7 @@ const login = async (req, res) => {
                 email: user.email,
                 role: user.role
             },
-            isAuthenticated: true
+            token: token // Send token in response as well
         });
     } catch (err) {
         console.error('Login error:', err);
