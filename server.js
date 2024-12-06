@@ -25,7 +25,8 @@ app.use(express.json());
 app.use(cors({
     origin: [
         'https://paharpur-frontend-adminpanel.vercel.app',
-        'https://pahar-pur-frontend.vercel.app'
+        'https://pahar-pur-frontend.vercel.app',
+        'https://paharpur-admin-fend.vercel.app'
     ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
