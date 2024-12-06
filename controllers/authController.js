@@ -59,9 +59,10 @@ const register = async (req, res) => {
         // Set cookie
         res.cookie('token', token, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
-            maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+            secure: true,
+            sameSite: 'none',
+            maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+            path: '/'
         });
 
         res.status(201).json({ 
@@ -148,7 +149,26 @@ const login = async (req, res) => {
 };
 
 const logout = async (req, res) => {
-    // Your logout logic
+    try {
+        res.cookie('token', '', {
+            httpOnly: true,
+            secure: true,
+            sameSite: 'none',
+            path: '/',
+            expires: new Date(0)
+        });
+
+        res.json({
+            success: true,
+            message: 'Logged out successfully'
+        });
+    } catch (err) {
+        res.status(500).json({
+            success: false,
+            message: 'Logout failed',
+            error: err.message
+        });
+    }
 };
 
 const checkAuth = async (req, res) => {

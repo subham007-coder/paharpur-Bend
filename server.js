@@ -22,10 +22,13 @@ connectDB();  // Call the function to connect to MongoDB
 // Middleware to parse JSON and enable CORS
 app.use(express.json());
 app.use(cors({
-    origin: ['http://localhost:5173', 'http://localhost:5174'], // Your React app URLs
-    credentials: true, // Important for cookies
+    origin: [
+        'https://paharpur-frontend-adminpanel.vercel.app',
+        'https://pahar-pur-frontend.vercel.app'
+    ],
+    credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
+    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie']
 }));  // Enable cross-origin requests
 
 // Add cookie-parser middleware before routes
