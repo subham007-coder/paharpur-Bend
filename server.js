@@ -75,6 +75,11 @@ app.get('/test-cors', (req, res) => {
     res.json({ message: 'CORS is working!' });
 });
 
+app.get('/', (req, res) => {
+    res.send('Welcome to the Paharpur Server!');
+});
+
+
 // Start Server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
