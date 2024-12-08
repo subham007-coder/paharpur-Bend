@@ -12,7 +12,7 @@ const cookieParser = require('cookie-parser');
 const enquiryRoutes = require('./routes/enquiryRoutes');
 const session = require('express-session');
 
-
+// Load environment variables
 dotenv.config();
 
 const app = express();
@@ -23,65 +23,55 @@ connectDB();  // Call the function to connect to MongoDB
 // Middleware to parse JSON and enable CORS
 app.use(express.json());
 app.use(cors({
-    origin: [
-        'https://paharpur-frontend-adminpanel.vercel.app',
-        'https://pahar-pur-frontend.vercel.app',
-        'https://paharpur-admin-fend.vercel.app'
-    ],
+    origin: '*',  // Allow all origins
+    // origin: [
+    //     'https://paharpur-frontend-adminpanel.vercel.app',
+    //     'https://pahar-pur-frontend.vercel.app',
+    //     'https://paharpur-admin-fend.vercel.app'
+    // ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Cookie'],
 }));
 
-// Add these additional settings for cookies
+// Add cookieParser middleware
 app.use(cookieParser());
 
 // Add cookie session settings if you're using it
 app.use(session({
-    secret: process.env.SESSION_SECRET,
+    secret: process.env.SESSION_SECRET,  // Make sure this is defined in your .env
     resave: false,
     saveUninitialized: false,
     cookie: {
-        secure: true,
-        sameSite: 'none',
+        secure: true,  // Ensure you're using HTTPS
+        sameSite: 'none',  // Required for cross-site cookies
         maxAge: 24 * 60 * 60 * 1000, // 24 hours
         path: '/',
         partitioned: true // Add this for Chrome's new cookie policy
     }
 }));
 
-// Use the auth routes
+// API routes
 app.use('/api/auth', authRoutes);
-
-// Use the header routes for handling header data
-app.use('/api/header', headerRoutes);  // Add this to handle header-related API requests
-
-// Routes
-app.use("/api/banner", bannerRoutes);
-
-// Herotext
-app.use("/api/hero-text", heroTextRoutes);
-
-// For modal
-app.use("/api/initiatives", initiativeRoutes);
-
-// Use the footer routes for handling footer data
-app.use("/api/footer", footerRoutes); 
-
-// Add enquiry routes
+app.use('/api/header', headerRoutes);  // Handle header-related API requests
+app.use('/api/banner', bannerRoutes);
+app.use('/api/hero-text', heroTextRoutes);
+app.use('/api/initiatives', initiativeRoutes);
+app.use('/api/footer', footerRoutes); 
 app.use('/api/enquiries', enquiryRoutes);
 
+// Test CORS route
 app.get('/test-cors', (req, res) => {
     res.json({ message: 'CORS is working!' });
 });
 
+// Root route to test server
 app.get('/', (req, res) => {
     res.send('Welcome to the Paharpur Server!');
 });
 
-
-// Start Server
+// Start Server and listen on all interfaces
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on port ${PORT}`);
 });
