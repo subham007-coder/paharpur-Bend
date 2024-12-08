@@ -5,12 +5,29 @@ const dotenv = require('dotenv');
 
 dotenv.config();
 const JWT_SECRET = process.env.JWT_SECRET;
-const TOKEN_EXPIRY = '7d';
+const TOKEN_EXPIRY = process.env.TOKEN_EXPIRY || '7d'; // Fallback to 7d if not defined in .env
 
 if (!JWT_SECRET) {
-    console.error("JWT_SECRET is not defined in .env");
+    console.error("JWT_SECRET is not defined in .env. Authentication will not work.");
     process.exit(1);
 }
+
+// Helper function to generate token and set cookie
+const generateTokenAndSetCookie = (user, res, expiresIn = TOKEN_EXPIRY) => {
+    const token = jwt.sign({ id: user._id, role: user.role }, JWT_SECRET, { expiresIn });
+
+    const isProduction = process.env.NODE_ENV === 'production';
+
+    res.cookie('token', token, {
+        httpOnly: true,
+        secure: isProduction, // Only secure cookies in production
+        sameSite: 'none',
+        maxAge: expiresIn === '24h' ? 24 * 60 * 60 * 1000 : 7 * 24 * 60 * 60 * 1000, // Adjust maxAge based on expiry
+        path: '/',
+    });
+
+    return token;
+};
 
 // Register User
 const register = async (req, res) => {
@@ -21,7 +38,7 @@ const register = async (req, res) => {
         const existingUser = await User.findOne({ 
             $or: [{ email }, { username }] 
         });
-        
+
         if (existingUser) {
             return res.status(400).json({ 
                 success: false,
@@ -35,35 +52,25 @@ const register = async (req, res) => {
         if (!['admin', 'superadmin'].includes(role)) {
             return res.status(400).json({ 
                 success: false,
-                message: 'Invalid role specified' 
+                message: 'Invalid role. Please specify either admin or superadmin.' 
             });
         }
+
+        // Hash password before saving
+        const hashedPassword = await bcrypt.hash(password, 10);
 
         // Create new user
         const newUser = new User({
             username,
             email,
-            password,
+            password: hashedPassword,
             role
         });
 
         await newUser.save();
 
-        // Create token
-        const token = jwt.sign(
-            { id: newUser._id, role: newUser.role },
-            JWT_SECRET,
-            { expiresIn: TOKEN_EXPIRY }
-        );
-
-        // Set cookie
-        res.cookie('token', token, {
-            httpOnly: true,
-            secure: true,
-            sameSite: 'none',
-            maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-            path: '/'
-        });
+        // Generate token and set cookie
+        const token = generateTokenAndSetCookie(newUser, res);
 
         res.status(201).json({ 
             success: true,
@@ -84,6 +91,7 @@ const register = async (req, res) => {
     }
 };
 
+// Login User
 const login = async (req, res) => {
     try {
         const { email, password } = req.body;
@@ -101,7 +109,7 @@ const login = async (req, res) => {
         if (!user) {
             return res.status(401).json({ 
                 success: false,
-                message: 'Invalid email or password' 
+                message: 'Invalid credentials' // Don't specify whether email or password is wrong
             });
         }
 
@@ -110,26 +118,12 @@ const login = async (req, res) => {
         if (!isMatch) {
             return res.status(401).json({ 
                 success: false,
-                message: 'Invalid email or password' 
+                message: 'Invalid credentials' // Same as above, don't specify password
             });
         }
 
-        // Create token
-        const token = jwt.sign(
-            { id: user._id, role: user.role },
-            process.env.JWT_SECRET,
-            { expiresIn: '24h' }
-        );
-
-        // Updated cookie settings
-        res.cookie('token', token, {
-            httpOnly: true,
-            secure: true,
-            sameSite: 'none',
-            path: '/',
-            maxAge: 24 * 60 * 60 * 1000,
-            partitioned: true // Add this for Chrome's new cookie policy
-        });
+        // Generate token and set cookie
+        const token = generateTokenAndSetCookie(user, res, '24h');
 
         res.json({
             success: true,
@@ -151,21 +145,26 @@ const login = async (req, res) => {
     }
 };
 
+// Logout User
 const logout = async (req, res) => {
     try {
+        // Clear the token cookie
         res.cookie('token', '', {
             httpOnly: true,
-            secure: true,
-            sameSite: 'none',
+            secure: true,  // Set to true for production, ensure you're using https
+            sameSite: 'None', // Required for cross-site cookies
             path: '/',
             expires: new Date(0)
         });
+        
 
+        // Send a success response
         res.json({
             success: true,
             message: 'Logged out successfully'
         });
     } catch (err) {
+        // Handle any errors
         res.status(500).json({
             success: false,
             message: 'Logout failed',
@@ -174,59 +173,82 @@ const logout = async (req, res) => {
     }
 };
 
-const checkAuth = async (req, res) => {
-    try {
-        const token = req.cookies.token;
-        
-        if (!token) {
-            return res.status(401).json({ 
-                success: false,
-                authenticated: false 
-            });
-        }
+// Export the logout function if needed
+module.exports = { logout };
 
-        const decoded = jwt.verify(token, JWT_SECRET);
-        const user = await User.findById(decoded.id).select('-password');
-        
-        if (!user) {
-            return res.status(401).json({ 
-                success: false,
-                authenticated: false 
-            });
-        }
+// Check Authentication
+// const checkAuth = async (req, res) => {
+//     try {
+//         // Retrieve token from cookies
+//         const token = req.cookies?.token;
 
-        res.json({
-            success: true,
-            authenticated: true,
-            user: {
-                username: user.username,
-                email: user.email,
-                role: user.role
-            }
-        });
-    } catch (err) {
-        res.status(401).json({ 
-            success: false,
-            authenticated: false,
-            message: 'Invalid token'
-        });
-    }
-};
+//         // If no token is present, return an unauthenticated response
+//         if (!token) {
+//             return res.status(401).json({
+//                 success: false,
+//                 authenticated: false,
+//                 message: 'Authentication token is missing'
+//             });
+//         }
+
+//         // Verify the token
+//         const decoded = jwt.verify(token, process.env.JWT_SECRET); // Ensure JWT_SECRET is properly configured in your environment variables
+
+//         // Fetch user details from the database using the decoded token's user ID
+//         const user = await User.findById(decoded.id).select('-password'); // Exclude password for security reasons
+
+//         // If no user is found, return an unauthenticated response
+//         if (!user) {
+//             return res.status(401).json({
+//                 success: false,
+//                 authenticated: false,
+//                 message: 'User not found'
+//             });
+//         }
+
+//         // Authentication successful, return user details
+//         res.status(200).json({
+//             success: true,
+//             authenticated: true,
+//             user: {
+//                 username: user.username,
+//                 email: user.email,
+//                 role: user.role
+//             }
+//         });
+//     } catch (err) {
+//         console.error('Authentication error:', err.message);
+        
+//         // Handle specific errors
+//         if (err.name === 'JsonWebTokenError' || err.name === 'TokenExpiredError') {
+//             return res.status(401).json({
+//                 success: false,
+//                 authenticated: false,
+//                 message: 'Invalid or expired token'
+//             });
+//         }
+
+//         // Default error response
+//         res.status(500).json({
+//             success: false,
+//             authenticated: false,
+//             message: 'An error occurred while verifying authentication'
+//         });
+//     }
+// };
+
 
 // Get All Admin Accounts
 const getAllAdmins = async (req, res) => {
     try {
-        // Get the current user's ID from the token
         const token = req.cookies.token;
         const decoded = jwt.verify(token, JWT_SECRET);
         const currentUserId = decoded.id;
 
-        // Find all admin and superadmin users
         const admins = await User.find({ 
             role: { $in: ['admin', 'superadmin'] } 
         }).select('_id username email role');
 
-        // Format the response
         const formattedAdmins = admins.map(admin => {
             const adminObj = {
                 _id: admin._id,
@@ -234,7 +256,6 @@ const getAllAdmins = async (req, res) => {
                 role: admin.role
             };
 
-            // Only include email if it's the current user
             if (admin._id.toString() === currentUserId) {
                 adminObj.email = admin.email;
             }
@@ -255,12 +276,11 @@ const getAllAdmins = async (req, res) => {
     }
 };
 
+// Get Current User
 const getCurrentUser = async (req, res) => {
     try {
-        // req.user is set by requireAuth middleware
-        const user = await User.findById(req.user._id)
-            .select('-password') // Exclude password
-            .select('-__v'); // Exclude version key
+        // Directly use req.user if it's populated by middleware (i.e., requireAuth)
+        const user = await User.findById(req.user._id).select('-password -__v');
 
         if (!user) {
             return res.status(404).json({
@@ -279,7 +299,6 @@ const getCurrentUser = async (req, res) => {
             }
         });
     } catch (error) {
-        console.error('Error in getCurrentUser:', error);
         res.status(500).json({
             success: false,
             message: 'Error fetching user data',
@@ -292,7 +311,7 @@ module.exports = {
     register,
     login,
     logout,
-    checkAuth,
+    // checkAuth,
     getAllAdmins,
     getCurrentUser
 };

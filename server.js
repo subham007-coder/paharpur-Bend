@@ -23,8 +23,8 @@ connectDB();
 // Middleware to parse JSON and enable CORS
 app.use(express.json());
 app.use(cors({
-    origin: 'http://localhost:5173',  // Allow all origins for now, restrict as needed
-    credentials: true,
+    origin: 'http://localhost:5173',  // Update this to match your frontend URL
+    credentials: true,  // Allow credentials (cookies)
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Cookie'],
 }));
@@ -41,7 +41,7 @@ app.use(session({
     resave: false,
     saveUninitialized: false,
     cookie: {
-        secure: true,  // Only if you're using HTTPS
+        secure: process.env.NODE_ENV === 'production',  // Set to true only in production (HTTPS)
         sameSite: 'none',  // Required for cross-site cookies
         maxAge: 24 * 60 * 60 * 1000, // 24 hours
     },
@@ -68,6 +68,6 @@ app.get('/', (req, res) => {
 
 // Start Server and listen on all interfaces
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server running on porttttt ${PORT}`);
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
 });
