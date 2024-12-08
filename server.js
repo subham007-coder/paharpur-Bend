@@ -68,6 +68,6 @@ app.get('/', (req, res) => {
 
 // Start Server and listen on all interfaces
 const PORT = process.env.PORT || 5000;
-app.listen(5000, '147.79.66.243', () => {
-    console.log(`Server running on porttt ${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server running on porttttt ${PORT}`);
 });
