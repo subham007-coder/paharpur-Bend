@@ -18,11 +18,10 @@ const generateTokenAndSetCookie = (user, res, expiresIn = TOKEN_EXPIRY) => {
 
     res.cookie('token', token, {
         httpOnly: true,
-        secure: true,  // Always true since you're using HTTPS
-        sameSite: 'strict',  // Changed from 'none' to 'strict' since both are on HTTPS
+        secure: false,  // Always true since you're using HTTPS
+        sameSite: 'none',  // Changed from 'none' to 'strict' since both are on HTTPS
         maxAge: expiresIn === '24h' ? 24 * 60 * 60 * 1000 : 7 * 24 * 60 * 60 * 1000,
         path: '/',
-        domain: '.adsu.shop'  // Add this if frontend and backend share the same root domain
     });
 
     return token;
@@ -122,13 +121,12 @@ const login = async (req, res) => {
         // Set the cookie with environment-aware settings
         res.cookie('token', token, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // 'lax' is better for local development
-            maxAge: 24 * 60 * 60 * 1000,
-            path: '/',
-            domain: process.env.NODE_ENV === 'production' ? '.adsu.shop' : 'localhost' // Adjust domain based on environment
+            secure: false, // Set to false for localhost
+            sameSite: 'none',
+            maxAge: 24 * 60 * 60 * 1000, // 24 hours
+            path: '/'
         });
-        
+        console.log('Cookie set with token:', token);
         // Set session data
         req.session.user = {
             id: user._id,

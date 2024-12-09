@@ -3,8 +3,9 @@ const User = require('../models/User');
 
 const requireAuth = async (req, res, next) => {
     try {
-        // Check for token in cookies and Authorization header
-        const token = req.cookies.token || req.headers.authorization?.split(' ')[1];
+        const token = req.cookies.token;
+        
+        console.log('Received token from cookie:', token); // Debug log
 
         if (!token) {
             return res.status(401).json({ 
@@ -29,6 +30,7 @@ const requireAuth = async (req, res, next) => {
         req.user = user;
         next();
     } catch (err) {
+        console.error('Auth middleware error:', err);
         res.status(401).json({ 
             success: false,
             message: 'Invalid token' 
