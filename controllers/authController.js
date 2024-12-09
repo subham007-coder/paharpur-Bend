@@ -121,8 +121,22 @@ const login = async (req, res) => {
             });
         }
 
-        // Generate token and set cookie
-        const token = generateTokenAndSetCookie(user, res, '24h');
+          // Generate token and set cookie
+          const token = jwt.sign(
+            { id: user._id, role: user.role },
+            process.env.JWT_SECRET,
+            { expiresIn: '24h' }
+        );
+
+         // Set the cookie
+         res.cookie('token', token, {
+            httpOnly: true,
+            secure: true,  // Since you're using HTTPS
+            sameSite: 'strict',
+            maxAge: 24 * 60 * 60 * 1000, // 24 hours
+            path: '/',
+            domain: '.adsu.shop'  // Adjust this to match your domain
+        });
 
         // Set session data
         req.session.user = {
@@ -133,7 +147,7 @@ const login = async (req, res) => {
         };
 
         // Ensure cookie is set before sending response
-        await new Promise(resolve => setTimeout(resolve, 100));
+        // await new Promise(resolve => setTimeout(resolve, 100));
 
         res.json({
             success: true,
