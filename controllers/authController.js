@@ -12,45 +12,111 @@ if (!JWT_SECRET) {
     process.exit(1);
 }
 
-// Helper function to generate token and set cookie
-const generateTokenAndSetCookie = (user, res, expiresIn = TOKEN_EXPIRY) => {
-    const token = jwt.sign({ id: user._id, role: user.role }, JWT_SECRET, { expiresIn });
+// Function to generate a token and set it as a cookie
+const generateTokenAndSetCookie = (user, res) => {
+    const token = jwt.sign(
+        { email: user.email }, // Payload (can include more details)
+        process.env.JWT_SECRET, // Secret key (store securely in .env)
+        { expiresIn: '1h' } // Token expiration time
+    );
 
+    // Set token as a cookie
     res.cookie('token', token, {
-        httpOnly: true,
-        secure: false,  // Always true since you're using HTTPS
-        sameSite: 'none',  // Changed from 'none' to 'strict' since both are on HTTPS
-        maxAge: expiresIn === '24h' ? 24 * 60 * 60 * 1000 : 7 * 24 * 60 * 60 * 1000,
-        path: '/',
+        httpOnly: true, // Prevent client-side access to the cookie
+        secure: process.env.NODE_ENV === 'production', // Ensure HTTPS in production
+        sameSite: 'None', // Enable cross-site cookies if needed
+        maxAge: 60 * 60 * 1000 // 1 hour in milliseconds
     });
 
-    return token;
+    return token; // Return token for any further use if needed
 };
 
 // Register User
+// const register = async (req, res) => {
+//     try {
+//         const { username, email, password, role } = req.body;
+
+//         // Check if user exists
+//         const existingUser = await User.findOne({ 
+//             $or: [{ email }, { username }] 
+//         });
+
+//         if (existingUser) {
+//             return res.status(400).json({ 
+//                 success: false,
+//                 message: existingUser.email === email ? 
+//                     'Email already in use' : 
+//                     'Username already taken' 
+//             });
+//         }
+
+//         // Validate role
+//         if (!['admin', 'superadmin'].includes(role)) {
+//             return res.status(400).json({ 
+//                 success: false,
+//                 message: 'Invalid role. Please specify either admin or superadmin.' 
+//             });
+//         }
+
+//         // Hash password before saving
+//         const hashedPassword = await bcrypt.hash(password, 10);
+
+//         // Create new user
+//         const newUser = new User({
+//             username,
+//             email,
+//             password: hashedPassword,
+//             role
+//         });
+
+//         await newUser.save();
+
+//         // Generate token and set cookie
+//         const token = generateTokenAndSetCookie(newUser, res);
+
+//         res.status(201).json({ 
+//             success: true,
+//             message: 'User registered successfully',
+//             user: {
+//                 username: newUser.username,
+//                 email: newUser.email,
+//                 role: newUser.role
+//             },
+//             isAuthenticated: true
+//         });
+//     } catch (err) {
+//         res.status(500).json({ 
+//             success: false,
+//             message: 'Registration failed',
+//             error: err.message 
+//         });
+//     }
+// };
+
+// Updated Register Function
 const register = async (req, res) => {
     try {
         const { username, email, password, role } = req.body;
 
         // Check if user exists
-        const existingUser = await User.findOne({ 
-            $or: [{ email }, { username }] 
+        const existingUser = await User.findOne({
+            $or: [{ email }, { username }]
         });
 
         if (existingUser) {
-            return res.status(400).json({ 
+            return res.status(400).json({
                 success: false,
-                message: existingUser.email === email ? 
-                    'Email already in use' : 
-                    'Username already taken' 
+                message: existingUser.email === email
+                    ? 'Email already in use'
+                    : 'Username already taken'
             });
         }
 
         // Validate role
         if (!['admin', 'superadmin'].includes(role)) {
-            return res.status(400).json({ 
+            return res.status(400).json({
                 success: false,
-                message: 'Invalid role. Please specify either admin or superadmin.' 
+                message: 'Invalid role. Please specify either admin or superadmin.'
             });
         }
 
@@ -70,7 +136,8 @@ const register = async (req, res) => {
         // Generate token and set cookie
         const token = generateTokenAndSetCookie(newUser, res);
 
-        res.status(201).json({ 
+        // Send success response
+        res.status(201).json({
             success: true,
             message: 'User registered successfully',
             user: {
@@ -78,16 +145,19 @@ const register = async (req, res) => {
                 email: newUser.email,
                 role: newUser.role
             },
-            isAuthenticated: true
+            isAuthenticated: true,
+            token // Optional: send token in response (e.g., for frontend access)
         });
     } catch (err) {
-        res.status(500).json({ 
+        res.status(500).json({
             success: false,
             message: 'Registration failed',
-            error: err.message 
+            error: err.message
         });
     }
 };
+
+
 
 const login = async (req, res) => {
     try {
