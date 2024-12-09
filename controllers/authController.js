@@ -12,7 +12,6 @@ if (!JWT_SECRET) {
     process.exit(1);
 }
 
-
 // Helper function to generate token and set cookie
 const generateTokenAndSetCookie = (user, res, expiresIn = TOKEN_EXPIRY) => {
     const token = jwt.sign({ id: user._id, role: user.role }, JWT_SECRET, { expiresIn });
