@@ -90,70 +90,45 @@ const register = async (req, res) => {
     }
 };
 
-// Login User
 const login = async (req, res) => {
     try {
-        console.log('Incoming body:', req.body); // Log the incoming body
         const { email, password } = req.body;
 
-        // Validate input
-        if (!email || !password) {
-            return res.status(400).json({ 
-                success: false,
-                message: 'Please provide both email and password' 
-            });
-        }
-
-        // Check if user exists
+        // Find the user first
         const user = await User.findOne({ email });
         if (!user) {
-            console.log('User not found:', email);
             return res.status(401).json({ 
-                success: false,
-                message: 'Invalid credentials' // Don't specify whether email or password is wrong
+                success: false, 
+                message: 'Invalid credentials' 
             });
         }
 
-        // Compare password
+        // Verify password
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
-            console.log('Invalid password for user:', email);
             return res.status(401).json({ 
-                success: false,
-                message: 'Invalid credentials' // Same as above, don't specify password
+                success: false, 
+                message: 'Invalid credentials' 
             });
         }
 
-         // Generate token and set cookie
-         const token = jwt.sign(
+        // Generate token
+        const token = jwt.sign(
             { id: user._id, role: user.role },
             process.env.JWT_SECRET,
             { expiresIn: '24h' }
         );
 
-        // Debug logs for token
-        console.log('Generated token:', token);
-        
-
-        // Set the cookie
+        // Set the cookie with environment-aware settings
         res.cookie('token', token, {
             httpOnly: true,
-            secure: isProduction,
-            sameSite: isProduction ? 'none' : 'lax', // 'lax' is better for local development
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // 'lax' is better for local development
             maxAge: 24 * 60 * 60 * 1000,
             path: '/',
-            domain: isProduction ? '.adsu.shop' : 'localhost' // Adjust domain based on environment
+            domain: process.env.NODE_ENV === 'production' ? '.adsu.shop' : 'localhost' // Adjust domain based on environment
         });
         
-        console.log('Cookie settings:', {
-            httpOnly: true,
-            secure: isProduction,
-            sameSite: isProduction ? 'none' : 'lax',
-            domain: isProduction ? '.adsu.shop' : 'localhost'
-        })
-        console.log('Cookie set successfully');
-
-
         // Set session data
         req.session.user = {
             id: user._id,
@@ -161,11 +136,6 @@ const login = async (req, res) => {
             email: user.email,
             role: user.role
         };
-
-        console.log('Session data set:', req.session.user);
-
-        // Ensure cookie is set before sending response
-        // await new Promise(resolve => setTimeout(resolve, 100));
 
         res.json({
             success: true,
