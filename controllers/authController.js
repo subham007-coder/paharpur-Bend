@@ -125,6 +125,14 @@ const login = async (req, res) => {
         // Generate token and set cookie
         const token = generateTokenAndSetCookie(user, res, '24h');
 
+        // Set session data
+        req.session.user = {
+            id: user._id,
+            username: user.username,
+            email: user.email,
+            role: user.role
+        };
+
         res.json({
             success: true,
             message: 'Login successful',
@@ -132,8 +140,7 @@ const login = async (req, res) => {
                 username: user.username,
                 email: user.email,
                 role: user.role
-            },
-            token: token // Send token in response as well
+            }
         });
     } catch (err) {
         console.error('Login error:', err);
@@ -151,14 +158,19 @@ const logout = async (req, res) => {
         // Clear the token cookie
         res.cookie('token', '', {
             httpOnly: true,
-            secure: true,  // Set to true for production, ensure you're using https
-            sameSite: 'None', // Required for cross-site cookies
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'None',
             path: '/',
             expires: new Date(0)
         });
-        
 
-        // Send a success response
+        // Destroy session
+        req.session.destroy((err) => {
+            if (err) {
+                throw new Error('Error destroying session');
+            }
+        });
+
         res.json({
             success: true,
             message: 'Logged out successfully'

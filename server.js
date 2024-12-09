@@ -23,7 +23,7 @@ connectDB();
 // Middleware to parse JSON and enable CORS
 app.use(express.json());
 app.use(cors({
-    origin: ['https://adsu.shop', 'https://admin.adsu.shop'],  // Update this to match your frontend URLs
+    origin: ['https://adsu.shop', 'https://admin.adsu.shop', "http://localhost:5173"],  // Update this to match your frontend URLs
     credentials: true,  // Allow credentials (cookies)
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Cookie'],
