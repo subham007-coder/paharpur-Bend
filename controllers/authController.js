@@ -93,6 +93,7 @@ const register = async (req, res) => {
 // Login User
 const login = async (req, res) => {
     try {
+        console.log('Incoming body:', req.body); // Log the incoming body
         const { email, password } = req.body;
 
         // Validate input
@@ -106,6 +107,7 @@ const login = async (req, res) => {
         // Check if user exists
         const user = await User.findOne({ email });
         if (!user) {
+            console.log('User not found:', email);
             return res.status(401).json({ 
                 success: false,
                 message: 'Invalid credentials' // Don't specify whether email or password is wrong
@@ -115,28 +117,43 @@ const login = async (req, res) => {
         // Compare password
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
+            console.log('Invalid password for user:', email);
             return res.status(401).json({ 
                 success: false,
                 message: 'Invalid credentials' // Same as above, don't specify password
             });
         }
 
-          // Generate token and set cookie
-          const token = jwt.sign(
+         // Generate token and set cookie
+         const token = jwt.sign(
             { id: user._id, role: user.role },
             process.env.JWT_SECRET,
             { expiresIn: '24h' }
         );
 
-         // Set the cookie
-         res.cookie('token', token, {
+        // Debug logs for token
+        console.log('Generated token:', token);
+        console.log('Setting cookie with options:', {
             httpOnly: true,
-            secure: true,  // Since you're using HTTPS
+            secure: true,
             sameSite: 'strict',
-            maxAge: 24 * 60 * 60 * 1000, // 24 hours
+            maxAge: 24 * 60 * 60 * 1000,
             path: '/',
-            domain: '.adsu.shop'  // Adjust this to match your domain
+            domain: '.adsu.shop'
         });
+
+        // Set the cookie
+        res.cookie('token', token, {
+            httpOnly: true,
+            secure: true,
+            sameSite: 'strict',
+            maxAge: 24 * 60 * 60 * 1000,
+            path: '/',
+            domain: '.adsu.shop'
+        });
+
+        console.log('Cookie set successfully');
+
 
         // Set session data
         req.session.user = {
@@ -145,6 +162,8 @@ const login = async (req, res) => {
             email: user.email,
             role: user.role
         };
+
+        console.log('Session data set:', req.session.user);
 
         // Ensure cookie is set before sending response
         // await new Promise(resolve => setTimeout(resolve, 100));

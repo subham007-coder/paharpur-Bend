@@ -20,36 +20,41 @@ const app = express();
 // Connect to the database
 connectDB();
 
-// Middleware to parse JSON and enable CORS
+// Single body-parser middleware setup
 app.use(express.json());
-app.use(express.urlencoded({ extended: true })); // For parsing application/x-www-form-urlencoded
+app.use(express.urlencoded({ extended: true }));
+
+// Single logging middleware
+app.use((req, res, next) => {
+    console.log(`${req.method} ${req.url} - Body:`, req.body);
+    next();
+});
+
+// CORS configuration
 app.use(cors({
-    origin: ['https://adsu.shop', 'https://admin.adsu.shop', "http://localhost:5173"],  // Update this to match your frontend URLs
-    credentials: true,  // Allow credentials (cookies)
+    origin: ['https://adsu.shop', 'https://admin.adsu.shop', "http://localhost:5173"],
+    credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Cookie'],
     exposedHeaders: ['set-cookie']
 }));
 
-// Middleware for static files (if needed, like serving HTML, CSS, JS files)
-app.use(express.static('public')); // Ensure you have a 'public' directory for static content
-
-// Add cookieParser middleware
+// Cookie parser middleware
 app.use(cookieParser());
 
-// Add session middleware (ensure you have the SESSION_SECRET in your .env)
+// Session middleware
 app.use(session({
     secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
     cookie: {
-        secure: process.env.NODE_ENV === 'production',  // Set to true only in production (HTTPS)
-        sameSite: 'none',  // Required for cross-site cookies
-        maxAge: 24 * 60 * 60 * 1000, // 24 hours
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'none',
+        maxAge: 24 * 60 * 60 * 1000,
     },
 }));
 
-// API routes
+// Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/header', headerRoutes);
 app.use('/api/banner', bannerRoutes);
@@ -67,6 +72,22 @@ app.get('/test-cors', (req, res) => {
 app.get('/', (req, res) => {
     res.send('Welcome to the Paharpur Server!');
 });
+
+app.post('/debug', (req, res) => {
+    console.log('Incoming body:', req.body);
+    res.json({ body: req.body });
+});
+
+app.post('/debug-test', (req, res) => {
+    console.log('Headers:', req.headers);
+    console.log('Raw Body:', req.body);
+    res.json({
+        receivedBody: req.body,
+        contentType: req.headers['content-type']
+    });
+});
+
+console.log("JWT_SECRET:", process.env.JWT_SECRET);  // Ensure this is not undefined
 
 // Start Server and listen on all interfaces
 const PORT = process.env.PORT || 5000;
