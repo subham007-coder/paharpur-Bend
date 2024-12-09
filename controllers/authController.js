@@ -133,25 +133,24 @@ const login = async (req, res) => {
 
         // Debug logs for token
         console.log('Generated token:', token);
-        console.log('Setting cookie with options:', {
-            httpOnly: true,
-            secure: true,
-            sameSite: 'strict',
-            maxAge: 24 * 60 * 60 * 1000,
-            path: '/',
-            domain: '.adsu.shop'
-        });
+        
 
         // Set the cookie
         res.cookie('token', token, {
             httpOnly: true,
-            secure: true,
-            sameSite: 'strict',
+            secure: isProduction,
+            sameSite: isProduction ? 'none' : 'lax', // 'lax' is better for local development
             maxAge: 24 * 60 * 60 * 1000,
             path: '/',
-            domain: '.adsu.shop'
+            domain: isProduction ? '.adsu.shop' : 'localhost' // Adjust domain based on environment
         });
-
+        
+        console.log('Cookie settings:', {
+            httpOnly: true,
+            secure: isProduction,
+            sameSite: isProduction ? 'none' : 'lax',
+            domain: isProduction ? '.adsu.shop' : 'localhost'
+        })
         console.log('Cookie set successfully');
 
 
