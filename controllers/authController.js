@@ -133,6 +133,9 @@ const login = async (req, res) => {
             role: user.role
         };
 
+        // Ensure cookie is set before sending response
+        await new Promise(resolve => setTimeout(resolve, 100));
+
         res.json({
             success: true,
             message: 'Login successful',

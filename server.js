@@ -27,6 +27,7 @@ app.use(cors({
     credentials: true,  // Allow credentials (cookies)
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Cookie'],
+    exposedHeaders: ['set-cookie']
 }));
 
 // Middleware for static files (if needed, like serving HTML, CSS, JS files)
