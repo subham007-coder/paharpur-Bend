@@ -22,6 +22,7 @@ connectDB();
 
 // Middleware to parse JSON and enable CORS
 app.use(express.json());
+app.use(express.urlencoded({ extended: true })); // For parsing application/x-www-form-urlencoded
 app.use(cors({
     origin: ['https://adsu.shop', 'https://admin.adsu.shop', "http://localhost:5173"],  // Update this to match your frontend URLs
     credentials: true,  // Allow credentials (cookies)
