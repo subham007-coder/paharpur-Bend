@@ -32,12 +32,38 @@ app.use((req, res, next) => {
 
 // CORS configuration
 app.use(cors({
-    origin: ['https://adsu.shop', 'https://admin.adsu.shop', "http://localhost:5173"],
+    origin: [
+        'https://admin.adsu.shop',
+        'https://adsu.shop',
+        'http://localhost:5173'
+    ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    allowedHeaders: [
+        'Content-Type',
+        'Authorization',
+        'X-Requested-With',
+        'Accept',
+        'Origin',
+        'Access-Control-Allow-Headers',
+        'Access-Control-Allow-Credentials'
+    ],
     exposedHeaders: ['set-cookie'],
+    preflightContinue: false,
+    optionsSuccessStatus: 204
 }));
+
+// Add this before your routes
+app.use((req, res, next) => {
+    const origin = req.headers.origin;
+    if (origin && origin.includes('adsu.shop')) {
+        res.setHeader('Access-Control-Allow-Origin', origin);
+    }
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
+    next();
+});
 
 // Cookie parser middleware
 app.use(cookieParser());
