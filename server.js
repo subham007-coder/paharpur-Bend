@@ -35,7 +35,7 @@ app.use(cors({
     origin: ['https://adsu.shop', 'https://admin.adsu.shop', "http://localhost:5173"],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Cookie'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Cookie','X-Requested-With'],
     exposedHeaders: ['set-cookie']
 }));
 
@@ -49,7 +49,8 @@ app.use(session({
     saveUninitialized: false,
     cookie: {
         secure: process.env.NODE_ENV === 'production',
-        sameSite: 'none',
+        sameSite: 'lax',
+        httpOnly: true,
         maxAge: 24 * 60 * 60 * 1000,
     },
 }));
