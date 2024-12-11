@@ -7,16 +7,18 @@ cloudinary.config({
 });
 
 // Upload file to Cloudinary
-const uploadToCloudinary = async (file, folder) => {
+const uploadToCloudinary = async (file) => {
     try {
-        const result = await cloudinary.uploader.upload(file, {
-            folder: folder,
-            resource_type: "auto"
+        // Convert file to base64
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = error => reject(error);
         });
-        return result.secure_url;
     } catch (error) {
-        console.error('Cloudinary upload error:', error);
-        throw new Error('Error uploading file to Cloudinary');
+        console.error('Error uploading to Cloudinary:', error);
+        throw error;
     }
 };
 

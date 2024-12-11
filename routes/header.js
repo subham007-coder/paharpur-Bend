@@ -1,11 +1,12 @@
 const express = require("express");
 const router = express.Router();
 const { getHeader, updateHeader } = require("../controllers/headerController");
+const { requireAuth } = require("../middleware/authMiddleware");
 
-// Route to get header data
+// Public route to get header data
 router.get("/", getHeader);
 
-// Route to update header data
-router.post("/update", updateHeader);
+// Protected route to update header data
+router.post("/update", requireAuth, updateHeader);
 
 module.exports = router;

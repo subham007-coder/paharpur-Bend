@@ -20,13 +20,13 @@ const updateHeader = async (req, res) => {
   try {
     const { logoUrl, contact, navigationLinks } = req.body;
     
-    // Find existing header to get old logo URL
+    // Find existing header
     const existingHeader = await Header.findOne();
     
-    // If there's a new logo, upload it to Cloudinary
+    // Handle logo upload
     let newLogoUrl = logoUrl;
     if (logoUrl && logoUrl.startsWith('data:image')) {
-      // Upload new logo
+      // Upload new logo to Cloudinary
       newLogoUrl = await uploadToCloudinary(logoUrl, 'headers');
       
       // Delete old logo if it exists
@@ -35,17 +35,27 @@ const updateHeader = async (req, res) => {
       }
     }
 
-    // Update header with new logo URL
+    // Prepare the update data
+    const updateData = {
+      logoUrl: newLogoUrl,
+      contact,
+      navigationLinks
+    };
+
+    // Update or create header
     const updatedHeader = await Header.findOneAndUpdate(
       {},
-      { logoUrl: newLogoUrl, contact, navigationLinks },
-      { new: true, upsert: true }
+      updateData,
+      { new: true, upsert: true, runValidators: true }
     );
 
     res.json(updatedHeader);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server error" });
+    console.error('Header update error:', error);
+    res.status(500).json({ 
+      message: "Server error", 
+      error: error.message 
+    });
   }
 };
 
