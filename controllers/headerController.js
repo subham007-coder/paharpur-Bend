@@ -1,4 +1,5 @@
 const Header = require("../models/Header");
+const { uploadToCloudinary, deleteFromCloudinary } = require('../utils/cloudinary');
 
 // Get header data from the database
 const getHeader = async (req, res) => {
@@ -18,11 +19,26 @@ const getHeader = async (req, res) => {
 const updateHeader = async (req, res) => {
   try {
     const { logoUrl, contact, navigationLinks } = req.body;
+    
+    // Find existing header to get old logo URL
+    const existingHeader = await Header.findOne();
+    
+    // If there's a new logo, upload it to Cloudinary
+    let newLogoUrl = logoUrl;
+    if (logoUrl && logoUrl.startsWith('data:image')) {
+      // Upload new logo
+      newLogoUrl = await uploadToCloudinary(logoUrl, 'headers');
+      
+      // Delete old logo if it exists
+      if (existingHeader && existingHeader.logoUrl) {
+        await deleteFromCloudinary(existingHeader.logoUrl);
+      }
+    }
 
-    // Find and update the header data in the database
+    // Update header with new logo URL
     const updatedHeader = await Header.findOneAndUpdate(
       {},
-      { logoUrl, contact, navigationLinks },
+      { logoUrl: newLogoUrl, contact, navigationLinks },
       { new: true, upsert: true }
     );
 

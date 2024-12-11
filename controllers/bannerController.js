@@ -1,4 +1,5 @@
 const Banner = require("../models/Banner");
+const { uploadToCloudinary, deleteFromCloudinary } = require('../utils/cloudinary');
 
 // Get banner data from the database
 const getBanner = async (req, res) => {
@@ -18,11 +19,26 @@ const getBanner = async (req, res) => {
 const updateBanner = async (req, res) => {
   try {
     const { imageUrl, overlayText } = req.body;
+    
+    // Find existing banner to get old image URL
+    const existingBanner = await Banner.findOne();
+    
+    // If there's a new image, upload it to Cloudinary
+    let newImageUrl = imageUrl;
+    if (imageUrl && imageUrl.startsWith('data:image')) {
+      // Upload new image
+      newImageUrl = await uploadToCloudinary(imageUrl, 'banners');
+      
+      // Delete old image if it exists
+      if (existingBanner && existingBanner.imageUrl) {
+        await deleteFromCloudinary(existingBanner.imageUrl);
+      }
+    }
 
-    // Find and update the banner data in the database
+    // Update banner with new image URL
     const updatedBanner = await Banner.findOneAndUpdate(
       {},
-      { imageUrl, overlayText },
+      { imageUrl: newImageUrl, overlayText },
       { new: true, upsert: true }
     );
 
