@@ -32,10 +32,10 @@ app.use((req, res, next) => {
 
 // CORS configuration
 app.use(cors({
-    origin: ['https://admin.adsu.shop', 'https://adsu.shop', 'http://localhost:5173'],
+    origin: ['https://admin.adsu.shop', 'https://adsu.shop'],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Access-Control-Allow-Credentials'],
+    allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 // Add this before your routes
@@ -60,12 +60,12 @@ app.use(session({
     saveUninitialized: false,
     cookie: {
         secure: true, // Required for HTTPS
-        sameSite: 'none', // Required for cross-subdomain
+        sameSite: 'Lax', // Use Lax for better security while maintaining functionality
         httpOnly: true,
-        domain: 'adsu.shop', // This will work for both main domain and subdomains
+        domain: '.adsu.shop', // Note the leading dot to include all subdomains
         path: '/',
         maxAge: 24 * 60 * 60 * 1000 // 24 hours
-    },
+    }
 }));
 
 // Routes
