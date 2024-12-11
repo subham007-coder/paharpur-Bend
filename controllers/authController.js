@@ -118,22 +118,14 @@ const login = async (req, res) => {
             { expiresIn: '24h' }
         );
 
-        // Set the cookie with environment-aware settings
+        // Set cookie
         res.cookie('token', token, {
             httpOnly: true,
-            secure: false, // Set to false for localhost
-            sameSite: 'none',
-            maxAge: 24 * 60 * 60 * 1000, // 24 hours
+            secure: true, // true for HTTPS
+            sameSite: 'none', // Required for cross-site cookies
+            maxAge: 24 * 60 * 60 * 1000,
             path: '/'
         });
-        console.log('Cookie set with token:', token);
-        // Set session data
-        req.session.user = {
-            id: user._id,
-            username: user.username,
-            email: user.email,
-            role: user.role
-        };
 
         res.json({
             success: true,
@@ -147,9 +139,8 @@ const login = async (req, res) => {
     } catch (err) {
         console.error('Login error:', err);
         res.status(500).json({ 
-            success: false,
-            message: 'Login failed',
-            error: err.message 
+            success: false, 
+            message: 'Login failed' 
         });
     }
 };

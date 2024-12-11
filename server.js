@@ -32,25 +32,10 @@ app.use((req, res, next) => {
 
 // CORS configuration
 app.use(cors({
-    origin: [
-        'https://admin.adsu.shop',
-        'https://adsu.shop',
-        'http://localhost:5173'
-    ],
+    origin: ['https://admin.adsu.shop', 'https://adsu.shop', 'http://localhost:5173'],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: [
-        'Content-Type',
-        'Authorization',
-        'X-Requested-With',
-        'Accept',
-        'Origin',
-        'Access-Control-Allow-Headers',
-        'Access-Control-Allow-Credentials'
-    ],
-    exposedHeaders: ['set-cookie'],
-    preflightContinue: false,
-    optionsSuccessStatus: 204
+    allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
 // Add this before your routes
