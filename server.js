@@ -30,29 +30,27 @@ app.use((req, res, next) => {
     next();
 });
 
-// Remove any existing CORS middleware and replace with this
+// CORS configuration
+app.use(cors({
+    origin: ['https://admin.adsu.shop', 'https://adsu.shop', 'http://localhost:5173'],
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Access-Control-Allow-Credentials'],
+}));
+
+// Add this before your routes
 app.use((req, res, next) => {
-    const allowedOrigins = ['https://admin.adsu.shop', 'https://adsu.shop'];
     const origin = req.headers.origin;
-    
-    if (allowedOrigins.includes(origin)) {
+    if (origin && origin.includes('adsu.shop')) {
         res.setHeader('Access-Control-Allow-Origin', origin);
     }
-
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     res.setHeader('Access-Control-Allow-Credentials', 'true');
-    res.setHeader('Access-Control-Max-Age', '86400'); // 24 hours
-
-    // Handle preflight requests
-    if (req.method === 'OPTIONS') {
-        return res.status(200).end();
-    }
-
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, Access-Control-Allow-Credentials');
     next();
 });
 
-// After CORS middleware, but before routes
+// Cookie parser middleware
 app.use(cookieParser());
 
 // Session middleware
@@ -62,12 +60,12 @@ app.use(session({
     saveUninitialized: false,
     cookie: {
         secure: true, // Required for HTTPS
-        sameSite: 'Lax', // Use Lax for better security while maintaining functionality
+        sameSite: 'none', // Required for cross-subdomain
         httpOnly: true,
-        domain: '.adsu.shop', // Note the leading dot to include all subdomains
+        domain: '.adsu.shop', // This will work for both main domain and subdomains
         path: '/',
         maxAge: 24 * 60 * 60 * 1000 // 24 hours
-    }
+    },
 }));
 
 // Routes
