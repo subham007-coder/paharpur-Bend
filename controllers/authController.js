@@ -93,18 +93,9 @@ const login = async (req, res) => {
     try {
         const { email, password } = req.body;
 
-        // Find the user
+        // Find user and verify password
         const user = await User.findOne({ email });
-        if (!user) {
-            return res.status(401).json({ 
-                success: false, 
-                message: 'Invalid credentials' 
-            });
-        }
-
-        // Verify password
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) {
+        if (!user || !(await bcrypt.compare(password, user.password))) {
             return res.status(401).json({ 
                 success: false, 
                 message: 'Invalid credentials' 
@@ -118,7 +109,7 @@ const login = async (req, res) => {
             { expiresIn: '24h' }
         );
 
-        // Set cookie
+        // Set cookie with specific options
         res.cookie('token', token, {
             httpOnly: true,
             secure: true,
@@ -128,7 +119,8 @@ const login = async (req, res) => {
             maxAge: 24 * 60 * 60 * 1000 // 24 hours
         });
 
-        res.json({
+        // Send response
+        return res.status(200).json({
             success: true,
             message: 'Login successful',
             user: {
@@ -139,9 +131,9 @@ const login = async (req, res) => {
         });
     } catch (err) {
         console.error('Login error:', err);
-        res.status(500).json({ 
+        return res.status(500).json({ 
             success: false, 
-            message: 'Login failed' 
+            message: 'Internal server error' 
         });
     }
 };

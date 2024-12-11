@@ -30,34 +30,29 @@ app.use((req, res, next) => {
     next();
 });
 
-// CORS configuration
-app.use(cors({
-    origin: ['https://admin.adsu.shop', 'https://adsu.shop'],
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: [
-        'Content-Type', 
-        'Authorization', 
-        'Access-Control-Allow-Headers',
-        'Access-Control-Allow-Credentials',
-        'Access-Control-Allow-Origin'
-    ],
-    exposedHeaders: ['set-cookie']
-}));
-
-// Additional CORS headers
+// Remove any existing CORS middleware and replace with this
 app.use((req, res, next) => {
+    const allowedOrigins = ['https://admin.adsu.shop', 'https://adsu.shop'];
     const origin = req.headers.origin;
-    if (origin && (origin.includes('adsu.shop'))) {
+    
+    if (allowedOrigins.includes(origin)) {
         res.setHeader('Access-Control-Allow-Origin', origin);
     }
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
+
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, Access-Control-Allow-Headers, Access-Control-Allow-Credentials, Access-Control-Allow-Origin');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Access-Control-Max-Age', '86400'); // 24 hours
+
+    // Handle preflight requests
+    if (req.method === 'OPTIONS') {
+        return res.status(200).end();
+    }
+
     next();
 });
 
-// Cookie parser middleware
+// After CORS middleware, but before routes
 app.use(cookieParser());
 
 // Session middleware

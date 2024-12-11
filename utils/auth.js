@@ -1,20 +1,24 @@
 import axios from 'axios';
 
-// Create an axios instance with the correct configuration
 const api = axios.create({
     baseURL: 'https://api.adsu.shop',
     withCredentials: true,
-    headers: {
-        'Content-Type': 'application/json'
-    }
 });
 
-// Login function
+// Remove any custom headers that might interfere with the request
+api.interceptors.request.use((config) => {
+    config.headers = {
+        'Content-Type': 'application/json',
+    };
+    return config;
+});
+
 export const login = async (credentials) => {
     try {
         const response = await api.post('/api/auth/login', credentials);
         return response.data;
     } catch (error) {
+        console.error('Login error:', error);
         throw error;
     }
 };
