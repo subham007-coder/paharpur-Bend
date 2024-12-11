@@ -93,7 +93,7 @@ const login = async (req, res) => {
     try {
         const { email, password } = req.body;
 
-        // Find the user first
+        // Find the user
         const user = await User.findOne({ email });
         if (!user) {
             return res.status(401).json({ 
@@ -121,10 +121,11 @@ const login = async (req, res) => {
         // Set cookie
         res.cookie('token', token, {
             httpOnly: true,
-            secure: true, // true for HTTPS
-            sameSite: 'none', // Required for cross-site cookies
-            maxAge: 24 * 60 * 60 * 1000,
-            path: '/'
+            secure: true,
+            sameSite: 'Lax',
+            domain: '.adsu.shop',
+            path: '/',
+            maxAge: 24 * 60 * 60 * 1000 // 24 hours
         });
 
         res.json({

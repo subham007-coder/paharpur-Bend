@@ -35,18 +35,25 @@ app.use(cors({
     origin: ['https://admin.adsu.shop', 'https://adsu.shop'],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
+    allowedHeaders: [
+        'Content-Type', 
+        'Authorization', 
+        'Access-Control-Allow-Headers',
+        'Access-Control-Allow-Credentials',
+        'Access-Control-Allow-Origin'
+    ],
+    exposedHeaders: ['set-cookie']
 }));
 
-// Add this before your routes
+// Additional CORS headers
 app.use((req, res, next) => {
     const origin = req.headers.origin;
-    if (origin && origin.includes('adsu.shop')) {
+    if (origin && (origin.includes('adsu.shop'))) {
         res.setHeader('Access-Control-Allow-Origin', origin);
     }
     res.setHeader('Access-Control-Allow-Credentials', 'true');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, Access-Control-Allow-Credentials');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, Access-Control-Allow-Headers, Access-Control-Allow-Credentials, Access-Control-Allow-Origin');
     next();
 });
 
